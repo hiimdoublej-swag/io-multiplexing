@@ -1,0 +1,36 @@
+version: '3'
+services:
+  epoll-server:
+    image: python:3.11-alpine3.16
+    command: python3 epoll-server.py
+    working_dir: /usr/src/app
+    env_file: .env
+    volumes:
+    - "./:/usr/src/app/"
+    ports:
+    - "8080:8080"
+  vegeta-epoll:
+    image: peterevans/vegeta
+    command:
+    - sh
+    - -c
+    - "echo 'GET http://epoll-server:8080' | vegeta attack -rate=2000 -duration=10s | tee results.bin | vegeta report"
+    depends_on:
+    - epoll-server
+  blocking-server:
+    image: python:3.11-alpine3.16
+    command: python3 blocking-server.py
+    working_dir: /usr/src/app
+    env_file: .env
+    volumes:
+    - "./:/usr/src/app/"
+    ports:
+    - "8080:8080"
+  vegeta-blocking:
+    image: peterevans/vegeta
+    command:
+    - sh
+    - -c
+    - "echo 'GET http://blocking-server:8080' | vegeta attack -rate=2000 -duration=10s | tee results.bin | vegeta report"
+    depends_on:
+    - blocking-server
